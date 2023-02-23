@@ -8,14 +8,18 @@
 #include <math.h>
 #include "function.h"
 
-Node jz[MaxSize];	//从文件中读取约8000+基站的信息
-int cnt;			//基站总个数 = cnt + 1
+Node jz[MaxSize];							//从文件中读取约8000+基站的信息
+int cnt;									//基站总个数 = cnt + 1
 bool file_jz1, file_jz2, file_wz, file_yd;	//保证数据只被用户导入一次
-QuadTree* root;		//四叉树树根
+QuadTree* root;								//四叉树树根
+
+Terminal yd[100];	//存储终端移动情况
+Fake wz[100];		//存储伪基站移动情况
+int yd_num, wz_num;	//存储终端、伪基站的数据条数（12/5）
 
 int main() {
 	int op = -1, num = 3;
-	char menu[5][50] = { "0-退出 ", "1-导入数据信息 ", "2-打开功能菜单 " };
+	char menu[5][50] = { "0-退出", "1-导入数据信息", "2-打开功能菜单"};
 	while (op != 0) {
 		printf("------------------------------\n");		//30个*
 		printf("|      输入数字选择功能      |\n");

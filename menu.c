@@ -7,21 +7,27 @@
 #include <math.h>
 #include "function.h"
 
-extern Node jz[MaxSize];	//从文件中读取约8000+基站的信息
-extern int cnt;				//基站总个数 = cnt + 1
+extern Node jz[MaxSize];							//从文件中读取约8000+基站的信息
+extern int cnt;										//基站总个数 = cnt + 1
 extern bool file_jz1, file_jz2, file_wz, file_yd;	//保证数据只被用户导入一次
-extern QuadTree* root;		//四叉树树根
+extern QuadTree* root;								//四叉树树根
+
+extern Terminal yd[100];	//存储终端移动情况
+extern Fake wz[100];		//存储伪基站移动情况
+extern int yd_num, wz_num;	//存储终端、伪基站的数据条数（12/5）
 
 //数据导入菜单
 void data_menu() {
-	int op = -1, num = 7;
-	FILE* fp;
-	Node* ptr1, * ptr2;	//指向尚未添加的节点
+	int op = -1, num = 6;
+	FILE *fp;
+	Node *ptr1_jz, *ptr2_jz;	//指向尚未添加的节点
+	Fake *ptr1_wz, *ptr2_wz;
+	Terminal* ptr1_yd, *ptr2_yd;
 	
 	region t;
 	initRegion(&t);
 
-	char menu[10][100] = { "0-退出 ", "1-导入基站1数据 ", "2-导入基站2数据 ", "3-导入伪基站数据 ", "4-导入移动数据 ", "5-生成四叉树 ", "6-返回上级菜单 " };
+	char menu[10][50] = { "0-主目录", "1-导入基站1数据", "2-导入基站2数据", "3-导入伪基站数据", "4-导入移动数据", "5-生成四叉树"};
 	printf("------------------------------\n");		//30个*
 	printf("|      输入数字选择功能      |\n");
 	printf("------------------------------\n");
@@ -46,12 +52,12 @@ void data_menu() {
 			printf("jz001.txt已被成功导入！请勿重复操作\n\n");
 			break;
 		}
-		ptr1 = &(jz[cnt]);
+		ptr1_jz = &(jz[cnt]);
 		fp = fopen("./data/jz001.txt", "r");
 		printf("jz001文件读取中：请稍后……\n");
-		ptr2 = readFile(fp, ptr1);
+		ptr2_jz = readFile_jz(fp, ptr1_jz);
 		fclose(fp);
-		cnt += (ptr2 - ptr1);
+		cnt += (ptr2_jz - ptr1_jz);
 		printf("共%d条基站数据已录入完成。\n\n", cnt);
 		file_jz1 = true;
 		break;
@@ -60,35 +66,41 @@ void data_menu() {
 			printf("jz002.txt已被成功导入！请勿重复操作\n\n");
 			break;
 		}
-		ptr1 = &(jz[cnt]);
+		ptr1_jz = &(jz[cnt]);
 		fp = fopen("./data/jz002.txt", "r");
 		printf("jz002文件读取中：请稍后……\n");
-		ptr2 = readFile(fp, ptr1);
+		ptr2_jz = readFile_jz(fp, ptr1_jz);
 		fclose(fp);
-		cnt += (ptr2 - ptr1);
+		cnt += (ptr2_jz - ptr1_jz);
 		printf("共%d条基站数据已录入完成。\n\n", cnt);
 		file_jz2 = true;
 		break;
 	case 3:
-		//待完成
 		if (file_wz) {
 			printf("wz001.txt已被成功导入！请勿重复操作\n\n");
 			break;
 		}
+		ptr1_wz = &(wz[wz_num]);
 		fp = fopen("./data/wz001.txt", "r");
 		printf("wz001文件读取中：请稍后……\n");
+		ptr2_wz = readFile_wz(fp, ptr1_wz);
 		fclose(fp);
+		wz_num += (ptr2_wz - ptr1_wz);
+		printf("共%d条伪基站数据已录入完成。\n\n", wz_num);
 		file_wz = true;
 		break;
 	case 4:
-		//待完成
 		if (file_yd) {
 			printf("yd001.txt已被成功导入！请勿重复操作\n\n");
 			break;
 		}
+		ptr1_yd = &(yd[yd_num]);
 		fp = fopen("./data/yd001.txt", "r");
 		printf("yd001文件读取中：请稍后……\n");
+		ptr2_yd = readFile_yd(fp, ptr1_yd);
 		fclose(fp);
+		yd_num += (ptr2_yd - ptr1_yd);
+		printf("共%d条移动终端数据已录入完成。\n\n", yd_num);
 		file_yd = true;
 		break;
 	case 5:
@@ -110,16 +122,18 @@ void data_menu() {
 		}
 		printf("四叉树已经建立完毕！共使用了%d个基站\n\n ", cnt);
 		break;
-	case 6:
-		return;
 	}
 }
 //函数功能菜单
 void func_menu() {
-	int op = -1, num = 7;
+	int op = -1, num = 7, dir = -1;
+	bool sign = false;
 	double x, y, r;
-	char menu[20][50] = { "0-退出 ", "1-查找最西(东)北(南)的基站 ", "2-查找指定范围内的基站 ", 
-		"3-选择信号最强的基站 ", "4- ", "5- ", "6- "};
+	char str[10];
+	char menu[20][100] = { "0-主目录", "1-查找最西(东)北(南)的基站", "2-查找指定范围内的基站", 
+		"3-输出指定位置是否处在无信号区域，如果有信号则输出信号最强的基站", "4-指定容量下的单元块大小", 
+		"5-输出依次切换的基站和通信连接状态", "6-"};
+
 	printf("------------------------------\n");		//30个
 	printf("|      输入数字选择功能      |\n");
 	printf("------------------------------\n");
@@ -140,7 +154,18 @@ void func_menu() {
 	case 0:
 		break;
 	case 1:
-		searchBoundary(root, SE);
+		printf("请输入您想查询的方向(例：东南)：");
+		scanf("%s", str);
+		puts("");
+		if (strcmp(str, "东南") == 0) dir = SE;
+		else if (strcmp(str, "东北") == 0) dir = NE;
+		else if (strcmp(str, "西南") == 0) dir = SW;
+		else if (strcmp(str, "西北") == 0) dir = NW;
+		else {
+			printf("您的输入格式错误！\n\n");
+			break;
+		}
+		searchBoundary(root, dir);
 		break;
 	case 2:
 		printf("请输入该范围的圆心(查询点)坐标: ");
@@ -151,12 +176,16 @@ void func_menu() {
 		query_distance(root, x, y, r);
 		break;
 	case 3:
-		printf("请输入该范围的圆心(查询点)坐标: ");
+		printf("请输入查询点坐标: ");
 		scanf("%lf %lf", &x, &y);
 		puts("");
 		query_intensity(root, x, y);
 		break;
 	case 4:
+		printf("请输入查询点坐标: ");
+		scanf("%lf %lf", &x, &y);
+		puts("");
+		query_region(root, x, y);
 		break;
 	case 5:
 		break;
