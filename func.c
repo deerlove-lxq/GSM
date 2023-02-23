@@ -4,9 +4,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "function.h"
+#include <time.h>
 #include <string.h>
 #include <math.h>
+#include "function.h"
 
 //计算基站信号有效范围
 void cal_valid_dist(Node* node) {
@@ -48,7 +49,7 @@ Node* readFile_jz(FILE* fp, Node* ptr) {
 				cal_valid_dist(ptr);	//计算出该基站的有效距离
 				ptr++;
 			}
-			printf("数据读取完毕!\n\n");
+			printf("数据读取完毕!");
 		}
 	}
 	return ptr;
@@ -76,7 +77,7 @@ Terminal* readFile_yd(FILE* fp, Terminal* ptr) {
 				ptr->hour = h, ptr->minute = min;
 				ptr++;
 			}
-			printf("数据读取完毕!\n\n");
+			printf("数据读取完毕!");
 		}
 	}
 	return ptr;
@@ -104,7 +105,7 @@ Fake* readFile_wz(FILE* fp, Fake* ptr) {
 				ptr->hour = h, ptr->minute = min, ptr->ID = id;
 				ptr++;
 			}
-			printf("数据读取完毕!\n\n");
+			printf("数据读取完毕!");
 		}
 	}
 	return ptr;
@@ -378,15 +379,79 @@ void query_intensity(QuadTree* root, double x, double y) {
 	printf("在(%.2lf, %.2lf)处 \t 信号最好的基站ID是：%d \t 信号强度为：%.2lf\n\n", x, y, id, max_intensity);
 }
 //查询指定点所处的叶子的矩形区域大小
-void query_region(QuadTree* root, double x, double y) {
+void query_region(QuadTree* root, int n, int m) {
 	//用于测试容量是否合理，防止长宽太小导致九宫格范围不足。
-	QuadTree* goal = query_leaf(root, x, y);
-	if (goal == NULL) return;
-	region r = goal->boundary;
-	int wid_x = r.right - r.left, wid_y = r.top - r.bottom;
-	printf("设置容量为%d的条件下，以(%.2lf, %.2lf)所处叶子的覆盖区域为基本单元\n", MAXJZ, x, y);
-	printf("单元纵向宽度：%d, 水平宽度: %d\n", wid_y, wid_x);
-	printf("以该单元为中心的九宫格的纵向宽度：%d, 水平宽度：%d\n\n", 3 * wid_y, 3 * wid_x);
+	if (n <= 0 || m <= 0) {
+		printf("您的输入有误，请输入正整数。\n\n");
+		return;
+	}
+	srand(time(NULL));
+	int sum_x = 0, sum_y = 0, sum_jz = 0, count = 0;
+	for (int i = 0; i < n; i++) {
+		//x的范围为：left ~ right		y的范围为：bottom ~ top	(因最左和最下都小于0，取绝对值后可得到此公式)
+		int x = rand() % (root->boundary.right - root->boundary.left + 1) + root->boundary.left;
+		int y = rand() % (root->boundary.top - root->boundary.bottom + 1) + root->boundary.bottom;
+		QuadTree* goal = query_leaf(root, x, y);
+		if (goal == NULL) continue;
+		region r = goal->boundary;
+		sum_x += r.right - r.left, sum_y += r.top - r.bottom;
+		sum_jz += (goal->nodesNum);
+		count++;
+	}
+	int ave_x = sum_x / count, ave_y = sum_y / count;
+	double ave_jz = 100.0 * sum_jz / (count * MAXJZ);
+	printf("叶子容量为%d的条件下, 随机在区域内取%d个坐标。得到叶子的基站数量和控制区域的平均大小。\n", MAXJZ, n);
+	printf("每个叶子平均的基站占有率：%.2lf%%, 区域纵向宽度：%d, 区域水平宽度: %d\n", ave_jz, ave_y, ave_x);
+	printf("以该叶子区域为中心的九宫格的纵向宽度：%d, 水平宽度：%d\n", 3 * ave_y, 3 * ave_x);
+
+	
+	//计算九宫格内的平均基站数量
+
+	int sum_nine = 0, count_nine = 0;
+
+	for (int i = 0; i < m; i++) {
+		int x = rand() % (root->boundary.right - root->boundary.left + 1) + root->boundary.left;
+		int y = rand() % (root->boundary.top - root->boundary.bottom + 1) + root->boundary.bottom;
+		QuadTree* goal = query_leaf(root, x, y);
+		if (goal == NULL) continue;
+		//找到了该坐标所属的叶子，推算出以该叶子为中心的等大小九宫格（利用region信息）
+		region rg = goal->boundary;
+		double x2 = rg.right, x1 = rg.left, y2 = rg.top, y1 = rg.bottom;
+		double u2 = (3 * x2 - x1) / 2, u1 = (3 * x1 - x2) / 2;
+		double v2 = (3 * y2 - y1) / 2, v1 = (3 * y1 - y2) / 2;
+
+		QuadTree* q[9];					//存储九宫格各中心所属的叶子
+		Node set_st[100], set_sec[100];	//分别存储第一次筛选后符合的基站和第二次筛选的基站
+		int t = 0;
+
+		//搜索九宫格各中心所属叶子，并存入q数组。0-9从左到右，从上到下。
+		q[0] = query_leaf(root, u1, v2);
+		q[1] = query_leaf(root, x, v2);
+		q[2] = query_leaf(root, u2, v2);
+		q[3] = query_leaf(root, u1, y);
+		q[4] = goal;
+		q[5] = query_leaf(root, u2, y);
+		q[6] = query_leaf(root, u1, v1);
+		q[7] = query_leaf(root, x, v1);
+		q[8] = query_leaf(root, u2, v1);
+
+		for (int i = 0; i < 9; i++) {
+			for (int j = 0; j < q[i]->nodesNum; j++) {
+				//简单的去重代码,由于体量较小，所以直接顺序查找。
+				bool st = true;
+				for (int k = 0; k < t; k++) {
+					if (set_st[k].ID == q[i]->nodes[j].ID) {
+						st = false;
+						break;
+					}
+				}
+				if (st) set_st[t++] = q[i]->nodes[j];	//将九宫格内所有可能的基站存入set数组
+			}
+		}
+		sum_nine += t;
+		count_nine++;
+	}
+	printf("九宫格内部的平均基站数量为：%d\n\n", sum_nine / count_nine);
 }
 //回收内存
 void destroyTree(QuadTree* root) {
@@ -399,3 +464,7 @@ void destroyTree(QuadTree* root) {
 	destroyTree(root->sw);
 	free(root);
 }
+
+
+
+//代码量：470行

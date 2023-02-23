@@ -6,6 +6,7 @@
 
 void data_menu();
 void func_menu();
+void shortcut();
 void cal_valid_dist(Node* node);
 double cal_its(Node node, double r);
 Node* readFile_jz(FILE* fp, Node* ptr);
@@ -18,7 +19,7 @@ void searchBoundary(QuadTree* root, direction dir);
 QuadTree* query_leaf(QuadTree* root, double x, double y);
 void query_distance(QuadTree* root, double x, double y, double r);
 void query_intensity(QuadTree* root, double x, double y);
-void query_region(QuadTree* root, double x, double y);
+void query_region(QuadTree* root, int n, int m);
 void destroyTree(QuadTree* root);
 
 #endif // _FUNCTION_h

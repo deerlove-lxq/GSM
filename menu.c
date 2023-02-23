@@ -28,13 +28,13 @@ void data_menu() {
 	initRegion(&t);
 
 	char menu[10][50] = { "0-主目录", "1-导入基站1数据", "2-导入基站2数据", "3-导入伪基站数据", "4-导入移动数据", "5-生成四叉树"};
-	printf("------------------------------\n");		//30个*
-	printf("|      输入数字选择功能      |\n");
-	printf("------------------------------\n");
+	printf("--------------------------------------------------\n");		//30个*
+	printf("|                输入数字选择功能                |\n");
+	printf("--------------------------------------------------\n");
 	for (int i = 0; i < num; i++) {
-		printf("|%-28s|\n", menu[i]);
+		printf("|%-48s|\n", menu[i]);
 	}
-	printf("------------------------------\n\n");
+	printf("--------------------------------------------------\n\n");
 	printf("请输入您的选择: ");
 	scanf("%d", &op);
 	puts("");
@@ -126,21 +126,21 @@ void data_menu() {
 }
 //函数功能菜单
 void func_menu() {
-	int op = -1, num = 7, dir = -1;
+	int op = -1, num = 7, dir = -1, n = -1, m = -1;
 	bool sign = false;
 	double x, y, r;
 	char str[10];
 	char menu[20][100] = { "0-主目录", "1-查找最西(东)北(南)的基站", "2-查找指定范围内的基站", 
-		"3-输出指定位置是否处在无信号区域，如果有信号则输出信号最强的基站", "4-指定容量下的单元块大小", 
+		"3-指定点是否处在无信号区域，输出信号最强的基站", "4-指定容量下平均单元块大小和叶子包含的基站数量", 
 		"5-输出依次切换的基站和通信连接状态", "6-"};
 
-	printf("------------------------------\n");		//30个
-	printf("|      输入数字选择功能      |\n");
-	printf("------------------------------\n");
+	printf("--------------------------------------------------\n");		//50个
+	printf("|                输入数字选择功能                |\n");
+	printf("--------------------------------------------------\n");
 	for (int i = 0; i < num; i++) {
-		printf("|%-28s|\n", menu[i]);
+		printf("|%-48s|\n", menu[i]);
 	}
-	printf("------------------------------\n\n");
+	printf("--------------------------------------------------\n\n");
 	printf("请输入您的选择: ");
 	scanf("%d", &op);
 	puts("");
@@ -182,10 +182,11 @@ void func_menu() {
 		query_intensity(root, x, y);
 		break;
 	case 4:
-		printf("请输入查询点坐标: ");
-		scanf("%lf %lf", &x, &y);
-		puts("");
-		query_region(root, x, y);
+		printf("请问需要设置多少个随机点去测试叶子区域的平均宽度？请输入正整数n：");
+		scanf("%d", &n);
+		printf("请问需要设置多少个随机点去测试九宫格内部的平均基站数量？(建议小于5000)请输入正整数m：");
+		scanf("%d", &m);
+		query_region(root, n, m);
 		break;
 	case 5:
 		break;
@@ -193,3 +194,87 @@ void func_menu() {
 		break;
 	}
 }
+//一键导入
+void shortcut() {
+	FILE* fp;
+	Node* ptr1_jz, * ptr2_jz;	//指向尚未添加的节点
+	Fake* ptr1_wz, * ptr2_wz;
+	Terminal* ptr1_yd, * ptr2_yd;
+
+	region t;
+	initRegion(&t);
+
+	if (file_jz1) {
+		printf("jz001.txt已被成功导入！请勿重复操作\n\n");
+		return;
+	}
+	ptr1_jz = &(jz[cnt]);
+	fp = fopen("./data/jz001.txt", "r");
+	printf("jz001文件读取中：请稍后……\n");
+	ptr2_jz = readFile_jz(fp, ptr1_jz);
+	fclose(fp);
+	cnt += (ptr2_jz - ptr1_jz);
+	printf("共%d条基站数据已录入完成。\n\n", cnt);
+	file_jz1 = true;
+
+	if (file_jz2) {
+		printf("jz002.txt已被成功导入！请勿重复操作\n\n");
+		return;
+	}
+	ptr1_jz = &(jz[cnt]);
+	fp = fopen("./data/jz002.txt", "r");
+	printf("jz002文件读取中：请稍后……\n");
+	ptr2_jz = readFile_jz(fp, ptr1_jz);
+	fclose(fp);
+	cnt += (ptr2_jz - ptr1_jz);
+	printf("共%d条基站数据已录入完成。\n\n", cnt);
+	file_jz2 = true;
+		
+	if (file_wz) {
+		printf("wz001.txt已被成功导入！请勿重复操作\n\n");
+		return;
+	}
+	ptr1_wz = &(wz[wz_num]);
+	fp = fopen("./data/wz001.txt", "r");
+	printf("wz001文件读取中：请稍后……\n");
+	ptr2_wz = readFile_wz(fp, ptr1_wz);
+	fclose(fp);
+	wz_num += (ptr2_wz - ptr1_wz);
+	printf("共%d条伪基站数据已录入完成。\n\n", wz_num);
+	file_wz = true;
+	
+	if (file_yd) {
+		printf("yd001.txt已被成功导入！请勿重复操作\n\n");
+		return;
+	}
+	ptr1_yd = &(yd[yd_num]);
+	fp = fopen("./data/yd001.txt", "r");
+	printf("yd001文件读取中：请稍后……\n");
+	ptr2_yd = readFile_yd(fp, ptr1_yd);
+	fclose(fp);
+	yd_num += (ptr2_yd - ptr1_yd);
+	printf("共%d条移动终端数据已录入完成。\n\n", yd_num);
+	file_yd = true;
+		
+	if (cnt == 0) {
+		printf("数据为空，请检查文件是否正常\n\n");
+		return;
+	}
+	//步骤1：利用基站坐标中的边界条件，创建并初始化根节点
+	for (int i = 0; i < cnt; i++) {
+		t.bottom = min(t.bottom, jz[i].y);
+		t.top = max(t.top, jz[i].y);
+		t.left = min(t.left, jz[i].x);
+		t.right = max(t.right, jz[i].x);
+	}
+	initTree(&root, t, Origin);
+	//步骤2：将基站数据插入四叉树
+	for (int i = 0; i < cnt; i++) {
+		insert(root, jz[i]);
+	}
+
+	printf("四叉树已经建立完毕！共使用了%d个基站。\n所有数据导入完毕！\n\n ", cnt);
+}
+
+
+//代码量：280行
