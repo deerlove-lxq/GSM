@@ -3,7 +3,7 @@
 #define _STRUCT_H
 
 //容量
-#define MAXJZ 2
+#define MAXJZ 6
 #define MaxSize 10000
 
 typedef enum {false, true} bool;
@@ -11,7 +11,7 @@ typedef enum {Origin, NW, NE, SW, SE} direction;
 
 //基站的数据结构
 typedef struct Node {
-	int x, y;			//坐标(由于坐标值很大，可以忽略小数部分，所以用整数近似表示)
+	double x, y;		//坐标
 	char loc[10];		//乡镇、城区、高速
 	double its;			//信号强度
 	double valid_dist;	//有效范围
@@ -20,7 +20,7 @@ typedef struct Node {
 
 //基站坐标范围的数据结构：确认中点
 typedef struct region {
-	int top, bottom, left, right;
+	double top, bottom, left, right;
 } region;
 
 //四叉树的数据结构
@@ -34,18 +34,22 @@ typedef struct QuadTree {
 
 //移动终端的数据结构
 typedef struct {
-	int xs, ys, xe, ye;
-	double speed;
+	double xs, ys, xe, ye;	//xs是现在的位置
+	double full_dist;
+	double speed;	//换算成米/秒
 	int hour;
 	int minute;
+	double seconds;
 } Terminal;
 
 //伪基站的数据结构
 typedef struct {
-	int xs, ys, xe, ye;
+	double xs, ys, xe, ye;
+	double full_dist, valid_dist;
 	double speed;
 	int hour;
 	int minute;
+	double seconds;
 	int ID;
 } Fake;
 

@@ -9,6 +9,8 @@
 #include "function.h"
 
 Node jz[MaxSize];							//从文件中读取约8000+基站的信息
+Node gaosu[20];								//单独存储少量的高速基站信息
+int cnt_gao;								//高速基站个数
 int cnt;									//基站总个数 = cnt + 1
 bool file_jz1, file_jz2, file_wz, file_yd;	//保证数据只被用户导入一次
 QuadTree* root;								//四叉树树根
@@ -46,6 +48,10 @@ int main() {
 			shortcut();
 			break;
 		case 3:
+			if (!file_jz1 && !file_jz2) {
+				printf("请先导入基站数据！\n\n");
+				break;
+			}
 			func_menu();
 			break;
 		}

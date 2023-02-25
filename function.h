@@ -14,12 +14,18 @@ Terminal* readFile_yd(FILE* fp, Terminal* ptr);
 Fake* readFile_wz(FILE* fp, Fake* ptr);
 void initTree(QuadTree** root, region x, direction dir);
 void initRegion(region* r);
-void insert(QuadTree* root, Node node);
+void createTree(QuadTree *root, Node *arr, int n);
 void searchBoundary(QuadTree* root, direction dir);
 QuadTree* query_leaf(QuadTree* root, double x, double y);
-void query_distance(QuadTree* root, double x, double y, double r);
+void query_rec(QuadTree* root, double x1, double y1, double x2, double y2, Node* res, int* res_cnt);
+double cal_intensity(QuadTree* root, double x, double y, int* ans);
 void query_intensity(QuadTree* root, double x, double y);
+Node search_id(int id);
 void query_region(QuadTree* root, int n, int m);
+Terminal cal_position(Terminal t, double dist);
+double cal_time(Terminal t1, Terminal t2);
+void bisection(double* xs, double* ys, double* xe, double* ye, int id);
+bool query_in(Terminal t, Node node);
 void destroyTree(QuadTree* root);
 
 #endif // _FUNCTION_h
