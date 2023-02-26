@@ -124,6 +124,7 @@ void data_menu() {
 		break;
 	}
 }
+
 //函数功能菜单
 void func_menu() {
 	int op = -1, num = 9, dir = -1, n = -1, m = -1, op_route = 0, op_jz = 1, op_wz = 0;
@@ -564,10 +565,10 @@ void connect_wz(Terminal yd_start, Fake wz_start) {
 	Terminal t1 = yd_start, t2 = yd_start;		//记录刚连接，刚断开，两个时刻的位置信息
 	Terminal t = yd_start;						//t记录终端行进位置
 	Fake w = wz_start;							//w记录伪站行进位置
-	double foot = 0.023;							//步长foot
+	double foot = 0.1;							//步长foot
 	double dist_yd = foot * t.speed, dist_wz = foot * w.speed;	//换算为步长dist
-	double k = w.full_time / foot;			//次数（以伪站停止运动为主)
-	bool flag_in = false, flag_out = false;		//判断是否有连接时间
+	double k = w.full_time / foot;								//次数（以伪站停止运动为主)
+	bool flag_in = false, flag_out = false;						//判断是否有连接时间
 
 	//由于开始时间不同，所以第一步应当使得时间统一
 	double dt = (t.hour * 3600 + t.minute * 60 + t.seconds) - (w.hour * 3600 + w.minute * 60 + w.seconds);
@@ -580,7 +581,6 @@ void connect_wz(Terminal yd_start, Fake wz_start) {
 		t = cal_position(t, (-dt) * t.speed);
 	}
 	
-	printf("%d时%d分%.1lf秒\n", t.hour, t.minute, t.seconds);
 	//功能实现：固定时间步长移动，不断探测与伪基站的距离是否在有效距离以内
 	double dx = t.xs - w.xs, dy = t.ys - w.ys;
 	double r = sqrt(dx * dx + dy * dy), pre_r = r;	//距离伪基站的距离
@@ -627,4 +627,4 @@ void connect_wz(Terminal yd_start, Fake wz_start) {
 	else printf("终端从%d时%d分%.1lf秒开始与伪基站连接，到%d时%d分%.1lf秒断开连接。共持续了%.1lf秒的连接时间。\n", t1.hour, t1.minute, t1.seconds, t2.hour, t2.minute, t2.seconds, cal_time(t1, t2));
 }
 
-//代码量：618行
+//代码量：630行
