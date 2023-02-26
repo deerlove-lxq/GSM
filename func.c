@@ -559,6 +559,13 @@ Fake cal_position_wz(Fake w, double dist) {
 	return ans;
 }
 
+//判断该基站是哪一个类型
+void judge_loc(int* city, int* town, int* gao, Node t) {
+	if (strcmp(t.loc, "城区") == 0) (*city)++;
+	else if (strcmp(t.loc, "乡镇") == 0) (*town)++;
+	else if (strcmp(t.loc, "高速") == 0) (*gao)++;
+}
+
 //二分法算出边界
 void bisection(double *xs, double *ys, double *xe, double *ye, int id) {
 	//给定两个坐标，在两坐标构成的线段上进行二分计算边界点

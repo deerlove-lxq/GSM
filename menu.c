@@ -129,7 +129,7 @@ void data_menu() {
 void func_menu() {
 	int op = -1, num = 9, dir = -1, n = -1, m = -1, op_route = 0, op_jz = 1, op_wz = 0;
 	int res_cnt = 0;
-	Node res[50], pre_jz, back_jz;
+	Node res[50], pre_jz, back_jz, goal_jz;
 	double x1, y1, x2, y2, x3, y3;
 
 	double foot = 20;
@@ -141,13 +141,17 @@ void func_menu() {
 	int id_its = -1, goal_id = -1, first_idx = 0;
 	int tmp = 0, all_id[100], tmp_num = 0;
 
+	//为第5问设计的数据 - 菜单中的功能5
+	int total_jz = 0, total_none = 0, total_city = 0, total_highway = 0, total_town = 0;
+	int change_times = 0, total_change = 0;
+
 	bool sign = false;
 	double x, y;
 	char str[10];
 	char menu[20][100] = { "0-主目录", "1-查找最西(东)北(南)基站", "2-查找指定矩形区域内的基站", 
 		"3-指定点是否处在无信号区域，输出信号最强的基站", "4-指定容量下平均单元块大小和叶子包含的基站数量", 
-		"5-输出依次切换的基站和通信连接状态", "6-离开/进入首个基站的有效信号范围", "7-计算通过重叠区的时间长度",
-		"8-查询是否能连上伪基站"};
+		"5-输出依次切换的基站和通信连接状态", "6-离开/进入第k条线路的第n个基站的有效信号范围", 
+		"7-计算通过首个重叠区的时间长度", "8-查询是否能连上伪基站"};
 
 	printf("--------------------------------------------------\n");		//50个
 	printf("|                输入数字选择功能                |\n");
@@ -211,7 +215,7 @@ void func_menu() {
 	case 4:
 		printf("请问需要设置多少个随机点去测试叶子区域的平均宽度？请输入正整数n：");
 		scanf("%d", &n);
-		printf("请问需要设置多少个随机点去测试九宫格内部的平均基站数量？(建议小于5000)请输入正整数m：");
+		printf("请问需要设置多少个随机点去测试九宫格内部的平均基站数量？请输入正整数m：");
 		scanf("%d", &m);
 		puts("");
 		query_region(root, n, m);
@@ -219,33 +223,57 @@ void func_menu() {
 
 
 	case 5:
-		printf("输出%d条路线经过的基站情况\n请输入步长：", yd_num);
+		printf("不考虑伪基站的条件下, 输出%d条路线经过的基站情况\n请输入步长：", yd_num);
 		scanf("%lf", &foot);
+		
 		for (int i = 0; i < yd_num; i++) {
 			t = yd[i];
 			t_jz_num = 0;
+			change_times = 1;
+			total_city = total_highway = total_town = 0;
 			its = cal_intensity(root, t.xs, t.ys, &id_its);
 			k = t.full_dist / foot;
 			printf("fdist=%.1lf,步长:%.1lf米,", t.full_dist, foot);
 			printf("%.2lf秒,k=%.1lf\n(%d)\n", foot / t.speed, k, i + 1);
+
 			//输出起始位置
+			
 			its = cal_intensity(root, t.xs, t.ys, &id_its);
+
 			if (id_its != -1) {
 				t_jz_num++;
-				printf("%d=%d:%d(%.3lf), 信号强度为：%.3lf\n", id_its, t.hour, t.minute, t.seconds, its);
+				judge_loc(&total_city, &total_town, &total_highway, search_id_jz(id_its));
+				printf("%d = %d时%d分%.3lf秒, 信号强度为：%.3lf, 类型为%s\n", id_its, t.hour, t.minute, t.seconds, its, search_id_jz(id_its).loc);
 			}
+			else {
+				printf("0 = %d时%d分%.3lf秒, 信号强度为0\n", t.hour, t.minute, t.seconds);
+			}
+
 			tmp = id_its;
 
+			//按步长遍历
 			for (int j = 0; j < k; j++) {
+
+				//计算出单步后的下一个位置：t，记录上一个位置为pre_t
 				t = cal_position(t, foot);
 				its = cal_intensity(root, t.xs, t.ys, &id_its);
+
 				if (id_its != tmp && id_its != -1) {
-					t_jz_num++;
-					printf("%d=%d:%d(%.3lf), 信号强度为：%.3lf\n", id_its, t.hour, t.minute, t.seconds, its);
+					t_jz_num++, change_times++;
+					judge_loc(&total_city, &total_town, &total_highway, search_id_jz(id_its));
+					printf("%d = %d时%d分%.3lf秒, 信号强度为：%.3lf, 类型为%s\n", id_its, t.hour, t.minute, t.seconds, its, search_id_jz(id_its).loc);
 				}
+				else if (id_its != tmp && id_its == -1) {
+					change_times++;
+					//输出上一个位置的信息
+					printf("0 = %d时%d分%.3lf秒, 信号强度为0\n", t.hour, t.minute, t.seconds);
+				}
+
 				tmp = id_its;
 			}
-			printf("共经过了%d个基站", t_jz_num);
+
+			printf("第%d条路线：终端共经过了%d个基站，共切换了%d次\n", i + 1, t_jz_num, change_times);
+			printf("合计高速基站%d个，乡镇基站%d个，城区基站%d个\n", total_highway, total_town, total_city);
 			puts("\n");
 		}
 		break;
@@ -260,7 +288,7 @@ void func_menu() {
 		scanf("%d", &op_jz);
 		printf("第%d条路线中，移动终端经过的第%d个基站的进入/离开信息如下：\n", op_route, op_jz);
 
-		//功能实现
+		//功能实现：移动终端在切换连接基站的过程中的信息
 		foot = 5;
 		t_jz_num = 0;
 		k = t.full_dist / foot;
@@ -295,8 +323,10 @@ void func_menu() {
 		tmp_t2 = cal_position(start_t, dr);
 		printf("误差为0.1米：%d时%d分%.4lf秒，在(%.1lf, %.1lf)-(%.1lf, %.1lf)处离开基站%d\n", tmp_t2.hour, tmp_t2.minute, tmp_t2.seconds, x, y, x3, y3, goal_id);
 		
-		printf("在该区域持续时间为%.1lf秒", cal_time(tmp_t1, tmp_t2));
-		puts("");
+		goal_jz = search_id_jz(goal_id);
+		printf("综上所述：第%d条路线终端经过的第%d个基站为：类型为%s，编号为%d\n", op_route, op_jz, goal_jz.loc, goal_jz.ID);
+		printf("终端在该基站的区域内持续时间为%.1lf秒", cal_time(tmp_t1, tmp_t2));
+		puts("\n");
 		break;
 
 
@@ -391,7 +421,7 @@ void shortcut() {
 	initRegion(&t);
 
 	if (file_jz1) {
-		printf("jz001.txt已被成功导入！请勿重复操作\n\n");
+		printf("所有数据已被成功导入！请勿重复操作\n\n");
 		return;
 	}
 	ptr1_jz = &(jz[cnt]);

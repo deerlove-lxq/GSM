@@ -26,6 +26,7 @@ void query_region(QuadTree* root, int n, int m);
 Terminal cal_position(Terminal t, double dist);
 Fake cal_position_wz(Fake w, double dist);
 double cal_time(Terminal t1, Terminal t2);
+void judge_loc(int* city, int* town, int* gao, Node t);
 void bisection(double* xs, double* ys, double* xe, double* ye, int id);
 bool query_in(Terminal t, Node node);
 void connect_wz(Terminal yd_start, Fake wz_start);
