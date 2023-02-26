@@ -126,7 +126,7 @@ void data_menu() {
 }
 //函数功能菜单
 void func_menu() {
-	int op = -1, num = 9, dir = -1, n = -1, m = -1, op_route = 0, op_jz = 1;
+	int op = -1, num = 9, dir = -1, n = -1, m = -1, op_route = 0, op_jz = 1, op_wz = 0;
 	int res_cnt = 0;
 	Node res[50], pre_jz, back_jz;
 	double x1, y1, x2, y2, x3, y3;
@@ -135,7 +135,8 @@ void func_menu() {
 	double its, k, dx, dy, dr;
 	
 	Terminal t, tmp_t1, tmp_t2, t1, t2, t3, start_t;
-	int t_jz_num = 0, id_pre = -1;
+	Fake w;
+	int t_jz_num = 0, id_pre = -1, id_wz = -1;
 	int id_its = -1, goal_id = -1, first_idx = 0;
 	int tmp = 0, all_id[100], tmp_num = 0;
 
@@ -250,7 +251,7 @@ void func_menu() {
 
 
 	case 6:
-		printf("请输入分析的移动路线编号（1 - %d）：", yd_num + 1);
+		printf("请输入分析的移动路线编号（1 - %d）：", yd_num);
 		scanf("%d", &op_route);
 		t = yd[op_route - 1];
 		start_t = t;
@@ -299,7 +300,7 @@ void func_menu() {
 
 
 	case 7:
-		printf("请输入分析的移动路线编号（1 - %d）：", yd_num + 1);
+		printf("请输入分析的移动路线编号（1 - %d）：", yd_num);
 		scanf("%d", &op_route);
 		printf("第%d条线路遇到的首个重叠区域为：\n\n", op_route);
 		
@@ -315,7 +316,7 @@ void func_menu() {
 			cal_intensity(root, t.xs, t.ys, &id_its);	//获取当前位置连接的基站id_its
 			if (id_its != id_pre && id_its != -1 && id_pre != -1) {
 				//当前连接与上次不同且当前和之前不为空
-				pre_jz = search_id(id_pre), back_jz = search_id(id_its);
+				pre_jz = search_id_jz(id_pre), back_jz = search_id_jz(id_its);
 				if (query_in(t, pre_jz) && query_in(t, back_jz)) {
 					//在两个基站的共同区域
 					t2 = t;
@@ -363,10 +364,21 @@ void func_menu() {
 		break;
 
 	case 8:
-
+		printf("请输入分析的移动路线编号（1 - %d）：", yd_num);
+		scanf("%d", &op_route);
+		printf("请输入分析的伪基站ID：");
+		scanf("%d", &op_wz);
+		
+		//功能实现：判断该伪站和该移动终端连接的时间
+		w = search_id_wz(op_wz);
+		t = yd[op_route - 1];
+		printf("伪基站%d相对于第%d条移动路线：\n", op_wz, op_route);
+		connect_wz(t, w);
+		puts("\n");
 		break;
 	}
 }
+
 //一键导入
 void shortcut() {
 	FILE* fp;
@@ -446,6 +458,7 @@ void shortcut() {
 
 	printf("四叉树已经建立完毕！共使用了%d个基站。\n所有数据导入完毕！\n\n ", cnt);
 }
+
 //生成四叉树
 void createTree(QuadTree* root, Node* arr, int n) {
 	if (root == NULL) {
@@ -513,8 +526,9 @@ void createTree(QuadTree* root, Node* arr, int n) {
 	free(node_se);
 	
 }
+
 //根据id搜索基站
-Node search_id(int id) {
+Node search_id_jz(int id) {
 	Node ans;
 	if (id <= 0) {
 		printf("输入的id不合法！");
@@ -528,4 +542,89 @@ Node search_id(int id) {
 	}
 	return ans;
 }
-//代码量：530行
+
+//根据id搜索伪站
+Fake search_id_wz(int id) {
+	Fake ans;
+	if (id <= 0) {
+		printf("输入的id不合法！");
+		exit(1);
+	}
+	for (int i = 0; i < wz_num; i++) {
+		if (wz[i].ID == id) {
+			ans = wz[i];
+			break;
+		}
+	}
+	return ans;
+}
+
+//计算何时连接/断开伪基站
+void connect_wz(Terminal yd_start, Fake wz_start) {
+	Terminal t1 = yd_start, t2 = yd_start;		//记录刚连接，刚断开，两个时刻的位置信息
+	Terminal t = yd_start;						//t记录终端行进位置
+	Fake w = wz_start;							//w记录伪站行进位置
+	double foot = 0.023;							//步长foot
+	double dist_yd = foot * t.speed, dist_wz = foot * w.speed;	//换算为步长dist
+	double k = w.full_time / foot;			//次数（以伪站停止运动为主)
+	bool flag_in = false, flag_out = false;		//判断是否有连接时间
+
+	//由于开始时间不同，所以第一步应当使得时间统一
+	double dt = (t.hour * 3600 + t.minute * 60 + t.seconds) - (w.hour * 3600 + w.minute * 60 + w.seconds);
+	if (dt > 0) {
+		//说明伪基站先出发，经过dt后终端出发
+		w = cal_position_wz(w, dt * w.speed);
+	}
+	else if (dt < 0) {
+		//说明终端先出发，经过dt后伪基站出发
+		t = cal_position(t, (-dt) * t.speed);
+	}
+	
+	printf("%d时%d分%.1lf秒\n", t.hour, t.minute, t.seconds);
+	//功能实现：固定时间步长移动，不断探测与伪基站的距离是否在有效距离以内
+	double dx = t.xs - w.xs, dy = t.ys - w.ys;
+	double r = sqrt(dx * dx + dy * dy), pre_r = r;	//距离伪基站的距离
+	int tmp = 0;	//临时保存步数
+
+	if (r <= w.valid_dist) {
+		//刚开始就连上了
+		t1 = t;
+		flag_in = true;
+	}
+	else {
+		//刚开始未连上
+		for (int i = 0; i < k; i++) {
+			t = cal_position(t, dist_yd);
+			w = cal_position_wz(w, dist_wz);
+			dx = t.xs - w.xs, dy = t.ys - w.ys;
+			r = sqrt(dx * dx + dy * dy);
+			if (r <= w.valid_dist && pre_r >= w.valid_dist) {
+				//说明找到了刚连接的坐标
+				t1 = t;
+				tmp = i;
+				flag_in = true;
+				break;
+			}
+			pre_r = r;
+		}
+	}
+	
+	for (int i = tmp; i < k; i++) {
+		t = cal_position(t, dist_yd);
+		w = cal_position_wz(w, dist_wz);
+		dx = t.xs - w.xs, dy = t.ys - w.ys;
+		r = sqrt(dx * dx + dy * dy);
+		if (r > w.valid_dist) {
+			//说明找到了刚离开的坐标
+			t2 = t;
+			flag_out = true;
+			break;
+		}
+	}
+
+	if (flag_in && !flag_out) t2 = t;
+	if (!flag_in) printf("没有连接的时间!\n");
+	else printf("终端从%d时%d分%.1lf秒开始与伪基站连接，到%d时%d分%.1lf秒断开连接。共持续了%.1lf秒的连接时间。\n", t1.hour, t1.minute, t1.seconds, t2.hour, t2.minute, t2.seconds, cal_time(t1, t2));
+}
+
+//代码量：618行

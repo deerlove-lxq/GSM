@@ -115,6 +115,7 @@ Fake* readFile_wz(FILE* fp, Fake* ptr) {
 				ptr->xs = a, ptr->ys = b, ptr->xe = c, ptr->ye = d, ptr->speed = v / 3.6;
 				ptr->hour = h, ptr->minute = min, ptr->ID = id, ptr->seconds = 0;
 				ptr->full_dist = sqrt((a - c) * (a - c) + (b - d) * (b - d));
+				ptr->full_time = ptr->full_dist / ptr->speed;
 				ptr->valid_dist = 40;
 				ptr++;
 			}
@@ -522,7 +523,7 @@ void query_region(QuadTree* root, int n, int m) {
 
 //返回经过dist距离后，移动终端的位置信息
 Terminal cal_position(Terminal t, double dist) {
-	Terminal ans;
+	Terminal ans = t;
 	//x和y的改变量
 	double chx = (t.xe - t.xs) * dist / t.full_dist, chy = (t.ye - t.ys) * dist / t.full_dist;	
 	//新的位置ans（同终点）变起点，变full_dist，变时间
@@ -539,10 +540,29 @@ Terminal cal_position(Terminal t, double dist) {
 	return ans;
 }
 
+//返回经过dist距离后，伪基站的位置信息
+Fake cal_position_wz(Fake w, double dist) {
+	Fake ans = w;
+	//x和y的改变量
+	double chx = (w.xe - w.xs) * dist / w.full_dist, chy = (w.ye - w.ys) * dist / w.full_dist;
+	//新的位置ans（同终点）变起点，变full_dist，变时间
+	ans.speed = w.speed, ans.xe = w.xe, ans.ye = w.ye;
+	ans.full_dist = w.full_dist - dist;
+	ans.xs = w.xs + chx, ans.ys = w.ys + chy;
+	//换算时间
+	double time = dist / w.speed;
+	double all_sec = time + w.seconds;
+	ans.seconds = all_sec - (int)all_sec + (int)all_sec % 60;
+	int all_minute = (int)(all_sec - ans.seconds) / 60 + w.minute;
+	ans.minute = all_minute % 60;
+	ans.hour = all_minute / 60 + w.hour;
+	return ans;
+}
+
 //二分法算出边界
 void bisection(double *xs, double *ys, double *xe, double *ye, int id) {
 	//给定两个坐标，在两坐标构成的线段上进行二分计算边界点
-	Node goal = search_id(id);
+	Node goal = search_id_jz(id);
 	double standard = goal.valid_dist;
 	double u = xe - xs, v = ye - ys, r = sqrt(u * u + v * v);
 	double us = goal.x - *xs, vs = goal.y - *ys, rs = sqrt(us * us + vs * vs);
@@ -593,6 +613,4 @@ void destroyTree(QuadTree* root) {
 	free(root);
 }
 
-
-
-//代码量：470行
+//代码量：616行

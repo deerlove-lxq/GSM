@@ -20,12 +20,15 @@ QuadTree* query_leaf(QuadTree* root, double x, double y);
 void query_rec(QuadTree* root, double x1, double y1, double x2, double y2, Node* res, int* res_cnt);
 double cal_intensity(QuadTree* root, double x, double y, int* ans);
 void query_intensity(QuadTree* root, double x, double y);
-Node search_id(int id);
+Node search_id_jz(int id);
+Fake search_id_wz(int id);
 void query_region(QuadTree* root, int n, int m);
 Terminal cal_position(Terminal t, double dist);
+Fake cal_position_wz(Fake w, double dist);
 double cal_time(Terminal t1, Terminal t2);
 void bisection(double* xs, double* ys, double* xe, double* ye, int id);
 bool query_in(Terminal t, Node node);
+void connect_wz(Terminal yd_start, Fake wz_start);
 void destroyTree(QuadTree* root);
 
 #endif // _FUNCTION_h

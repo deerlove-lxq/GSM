@@ -45,7 +45,7 @@ typedef struct {
 //伪基站的数据结构
 typedef struct {
 	double xs, ys, xe, ye;
-	double full_dist, valid_dist;
+	double full_dist, valid_dist, full_time;
 	double speed;
 	int hour;
 	int minute;
