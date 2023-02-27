@@ -256,7 +256,7 @@ QuadTree* query_leaf(QuadTree* root, double x, double y) {
 void query_rec(QuadTree* root, double x1, double y1, double x2, double y2, Node* res, int* res_cnt) {
 	if (root == NULL) {
 		printf("四叉树尚未进行初始化建立！\n\n");
-		return NULL;
+		return;
 	}
 	//该点是叶子
 	if (root->is_leafNode) {
