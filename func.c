@@ -194,9 +194,9 @@ void searchBoundary(QuadTree* root, direction dir) {
 		while (root->nw != NULL) root = root->nw;
 		r = root->boundary;
 		printf("西北角的叶子区域范围为：(%.2lf, %.2lf, %.2lf, %.2lf)\n", r.left, r.bottom, r.right, r.top);
-		printf("容量为%d时，最西北侧的基站有：", MAXJZ);
+		printf("容量为%d时，最西北侧的基站有：\n", MAXJZ);
 		for (int i = 0; i < root->nodesNum; i++) {
-			printf("%d ", root->nodes[i].ID);
+			printf("%d - (%.1lf, %.1lf) - %s\n", root->nodes[i].ID, root->nodes[i].x, root->nodes[i].y, root->nodes[i].loc);
 		}
 		printf("\n\n");
 		break;
@@ -204,9 +204,9 @@ void searchBoundary(QuadTree* root, direction dir) {
 		while (root->ne != NULL) root = root->ne;
 		r = root->boundary;
 		printf("东北角的叶子区域范围为：(%.2lf, %.2lf, %.2lf, %.2lf)\n", r.left, r.bottom, r.right, r.top);
-		printf("容量为%d时，最东北侧的基站有：", MAXJZ);
+		printf("容量为%d时，最东北侧的基站有：\n", MAXJZ);
 		for (int i = 0; i < root->nodesNum; i++) {
-			printf("%d ", root->nodes[i].ID);
+			printf("%d - (%.1lf, %.1lf) - %s\n", root->nodes[i].ID, root->nodes[i].x, root->nodes[i].y, root->nodes[i].loc);
 		}
 		printf("\n\n");
 		break;
@@ -214,9 +214,9 @@ void searchBoundary(QuadTree* root, direction dir) {
 		while (root->sw != NULL) root = root->sw;
 		r = root->boundary;
 		printf("西南角的叶子区域范围为：(%.2lf, %.2lf, %.2lf, %.2lf)\n", r.left, r.bottom, r.right, r.top);
-		printf("容量为%d时，最西南侧的基站有：", MAXJZ);
+		printf("容量为%d时，最西南侧的基站有：\n", MAXJZ);
 		for (int i = 0; i < root->nodesNum; i++) {
-			printf("%d ", root->nodes[i].ID);
+			printf("%d - (%.1lf, %.1lf) - %s\n", root->nodes[i].ID, root->nodes[i].x, root->nodes[i].y, root->nodes[i].loc);
 		}
 		printf("\n\n");
 		break;
@@ -224,9 +224,9 @@ void searchBoundary(QuadTree* root, direction dir) {
 		while (root->se != NULL) root = root->se;
 		r = root->boundary;
 		printf("东南角的叶子区域范围为：(%.2lf, %.2lf, %.2lf, %.2lf)\n", r.left, r.bottom, r.right, r.top);
-		printf("容量为%d时，最东南侧的基站有：", MAXJZ);
+		printf("容量为%d时，最东南侧的基站有：\n", MAXJZ);
 		for (int i = 0; i < root->nodesNum; i++) {
-			printf("%d ", root->nodes[i].ID);
+			printf("%d - (%.1lf, %.1lf) - %s\n", root->nodes[i].ID, root->nodes[i].x, root->nodes[i].y, root->nodes[i].loc);
 		}
 		printf("\n\n");
 		break;
@@ -346,6 +346,7 @@ void query_intensity(QuadTree* root, double x, double y) {
 	QuadTree* q[9];					//存储九宫格各中心所属的叶子
 	double max_intensity = 0.01;	//如果小于相对强度小于0.01，视为无信号。
 	double min_r = _CRT_INT_MAX;	//设置距离因素指标min_r
+	Node goal_jz;
 	int id_its = -1, id_r = -1;
 	bool sign = true;
 
@@ -406,13 +407,16 @@ void query_intensity(QuadTree* root, double x, double y) {
 	}
 
 	if (sign) {
+		goal_jz = search_id_jz(id_r);
 		printf("(%.2lf, %.2lf)处在无信号覆盖的区域\n", x, y);
-		printf("距离该点最近的基站为：%d\n\n", id_r);
+		printf("距离该点最近的基站为：%d - (%.1lf, %.1lf) - %s\n\n", id_r, goal_jz.x, goal_jz.y, goal_jz.loc);
 		return;
 	}
 
-	printf("在(%.2lf, %.2lf)处信号最好的基站ID是：%d\t信号强度为：%.2lf\n", x, y, id_its, max_intensity);
-	printf("距离该点最近的基站为：%d\n\n", id_r);
+	goal_jz = search_id_jz(id_its);
+	printf("在(%.2lf, %.2lf)处信号最好的基站是：%d - (%.1lf, %.1lf) - %s\t信号强度为：%.2lf\n", x, y, id_its, goal_jz.x, goal_jz.y, goal_jz.loc, max_intensity);
+	goal_jz = search_id_jz(id_r);
+	printf("距离该点最近的基站为：%d - (%.1lf, %.1lf) - %s\n\n", id_r, goal_jz.x, goal_jz.y, goal_jz.loc);
 }
 
 //只返回信号强度不返回
@@ -672,4 +676,5 @@ void destroyTree(QuadTree* root) {
 	free(root);
 }
 
-//代码量：616行
+
+//代码量：680行

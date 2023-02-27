@@ -202,7 +202,7 @@ void func_menu() {
 		puts("");
 
 		if (plan == 1) {
-			printf("1.利用平面切割的均匀性，只要略有重合区域就去搜，因为平面内任何区域内总会被分割，所以保证了搜索的全面性。另外此方法不需要考虑重复录入。\n不足：考虑情况略多，效率略低。\n\n");
+			printf("方法1：利用平面切割的均匀性，只要略有重合区域就去搜，因为平面内任何区域内总会被分割，所以保证了搜索的全面性。另外此方法不需要考虑重复录入。\n不足：考虑情况略多，效率略低。\n\n");
 			query_rec(root, x1, y1, x2, y2, res, &res_cnt);	//区域划分法
 		}
 			
@@ -215,9 +215,9 @@ void func_menu() {
 
 		if (res_cnt == 0) printf("(%.2lf, %.2lf, %.2lf, %.2lf)区域内无基站", x1, y1, x2, y2);
 		else {
-			printf("(%.2lf, %.2lf, %.2lf, %.2lf)区域内的基站ID：", x1, y1, x2, y2);
+			printf("(%.2lf, %.2lf, %.2lf, %.2lf)区域内的基站：\n", x1, y1, x2, y2);
 			for (int i = 0; i < res_cnt; i++) {
-				printf("%d ", res[i].ID);
+				printf("%d - (%.1lf, %.1lf) - %s\n", res[i].ID, res[i].x, res[i].y, res[i].loc);
 			}
 		}
 		puts("\n");
@@ -677,4 +677,4 @@ void connect_wz(Terminal yd_start, Fake wz_start) {
 	else printf("终端从%d时%d分%.1lf秒开始与伪基站连接，到%d时%d分%.1lf秒断开连接。共持续了%.1lf秒的连接时间。\n", t1.hour, t1.minute, t1.seconds, t2.hour, t2.minute, t2.seconds, cal_time(t1, t2));
 }
 
-//代码量：630行
+//代码量：680行
