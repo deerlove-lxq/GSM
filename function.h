@@ -18,6 +18,7 @@ void createTree(QuadTree *root, Node *arr, int n);
 void searchBoundary(QuadTree* root, direction dir);
 QuadTree* query_leaf(QuadTree* root, double x, double y);
 void query_rec(QuadTree* root, double x1, double y1, double x2, double y2, Node* res, int* res_cnt);
+void query_rec_2(QuadTree* root, double x1, double y1, double x2, double y2, Node* res, int* res_cnt);
 double cal_intensity(QuadTree* root, double x, double y, int* ans);
 void query_intensity(QuadTree* root, double x, double y);
 Node search_id_jz(int id);
@@ -30,6 +31,7 @@ void judge_loc(int* city, int* town, int* gao, Node t);
 void bisection(double* xs, double* ys, double* xe, double* ye, int id);
 bool query_in(Terminal t, Node node);
 void connect_wz(Terminal yd_start, Fake wz_start);
+int hash_id(int id);
 void destroyTree(QuadTree* root);
 
 #endif // _FUNCTION_h

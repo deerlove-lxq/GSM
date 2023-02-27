@@ -128,7 +128,7 @@ void data_menu() {
 //函数功能菜单
 void func_menu() {
 	int op = -1, num = 9, dir = -1, n = -1, m = -1, op_route = 0, op_jz = 1, op_wz = 0;
-	int res_cnt = 0;
+	int res_cnt = 0, plan = 1;
 	Node res[50], pre_jz, back_jz, goal_jz;
 	double x1, y1, x2, y2, x3, y3;
 
@@ -192,7 +192,27 @@ void func_menu() {
 		printf("请输入该矩形范围的边界信息（顺序输入左下右上边界：x1 y1 x2 y2）");	
 		scanf("%lf %lf %lf %lf", &x1, &y1, &x2, &y2);
 		puts("");
-		query_rec(root, x1, y1, x2, y2, res, &res_cnt);
+		printf("选择1：通过从上而下的方式进行区域划分（100%%精度，效率略低）\n");
+		printf("选择2：通过自下而上的方式进行九宫格查找（含有近似，效率更高）\n请输入您的选择：");
+		scanf("%d", &plan);
+		while (plan > 2 || plan < 1) {
+			printf("您的输入不合法！请重新输入：");
+			scanf("%d", &plan);
+		}
+		puts("");
+
+		if (plan == 1) {
+			printf("1.利用平面切割的均匀性，只要略有重合区域就去搜，因为平面内任何区域内总会被分割，所以保证了搜索的全面性。另外此方法不需要考虑重复录入。\n不足：考虑情况略多，效率略低。\n\n");
+			query_rec(root, x1, y1, x2, y2, res, &res_cnt);	//区域划分法
+		}
+			
+		else if (plan == 2) {
+			printf("方法2：采用九宫格法覆盖原区域，采用最小的环绕区域，极大地缩小了范围，然后再进行二次筛选。");
+			printf("另外巧妙运用哈希表散列基站ID，使用尽量小的空间保证基站不重复被考虑\n");
+			printf("不足：对于一小部分区域的搜索可能并不全面，包含近似所以精度略低。\n\n");
+			query_rec_2(root, x1, y1, x2, y2, res, &res_cnt);	//九宫格法
+		}
+
 		if (res_cnt == 0) printf("(%.2lf, %.2lf, %.2lf, %.2lf)区域内无基站", x1, y1, x2, y2);
 		else {
 			printf("(%.2lf, %.2lf, %.2lf, %.2lf)区域内的基站ID：", x1, y1, x2, y2);

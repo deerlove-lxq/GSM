@@ -279,6 +279,58 @@ void query_rec(QuadTree* root, double x1, double y1, double x2, double y2, Node*
 	}
 }
 
+//哈希表散列ID，映射到较小的区域内（共有约8800个基站）
+int hash_id(int id) {
+	return id % 131;
+}
+
+//查找矩形范围内的所有基站（自下而上：利用九宫格算法360°的容纳所有结点）
+void query_rec_2(QuadTree* root, double x1, double y1, double x2, double y2, Node* res, int* res_cnt) {
+	//找到位置坐标附近的所有基站
+	double x = (x1 + x2) / 2, y = (y1 + y2) / 2;	//取区域中点
+	QuadTree* goal = query_leaf(root, x, y);
+	if (goal == NULL) {
+		printf("四叉树尚未进行初始化建立！\n\n");
+		return;
+	}
+
+	//找到了该坐标所属的叶子，推算出以该叶子为中心的等大小九宫格（利用region信息）
+	double u2 = (3 * x2 - x1) / 2, u1 = (3 * x1 - x2) / 2;
+	double v2 = (3 * y2 - y1) / 2, v1 = (3 * y1 - y2) / 2;
+
+	QuadTree* q[9];					//存储九宫格各中心所属的叶子
+	double max_intensity = 0.01;	//如果小于相对强度小于0.01，视为无信号。
+	double min_r = _CRT_INT_MAX;	//设置距离因素指标min_r
+	int id_its = -1, id_r = -1;
+	bool sign = true, sign_id[1000];		//利用hash散列将id散列到0-1000内
+	memset(sign_id, 0, sizeof(sign_id));	//将sign数组置false
+
+	//搜索九宫格各中心所属叶子，并存入q数组。0-9从左到右，从上到下。
+	q[0] = query_leaf(root, u1, v2);
+	q[1] = query_leaf(root, x, v2);
+	q[2] = query_leaf(root, u2, v2);
+	q[3] = query_leaf(root, u1, y);
+	q[4] = goal;
+	q[5] = query_leaf(root, u2, y);
+	q[6] = query_leaf(root, u1, v1);
+	q[7] = query_leaf(root, x, v1);
+	q[8] = query_leaf(root, u2, v1);
+
+	//遍历九宫格内的所有结点
+	for (int i = 0; i < 9; i++) {
+		for (int j = 0; j < q[i]->nodesNum; j++) {
+			int u = hash_id(q[i]->nodes[j].ID);	//散列映射
+			bool sign_x = (q[i]->nodes[j].x <= x2 && q[i]->nodes[j].x >= x1);
+			bool sign_y = (q[i]->nodes[j].y <= y2 && q[i]->nodes[j].y >= y1);
+			if (sign_x && sign_y && !sign_id[u]) {
+				//说明该基站在区域内
+				res[(*res_cnt)++] = q[i]->nodes[j];
+				sign_id[u] = true;	//防止不重复添加
+			}
+		}
+	}
+}
+
 //考虑信号强度，查找相对指定坐标信号最强的基站
 void query_intensity(QuadTree* root, double x, double y) {
 	//找到位置坐标附近的所有基站
