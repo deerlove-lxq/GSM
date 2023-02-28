@@ -5,7 +5,7 @@ VisualStudioVersion = 17.3.32922.545
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MyProject1", "MyProject1.vcxproj", "{61C97C24-54D3-43A8-A6C6-12EAFB33A4BA}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "程序设计课设", "..\程序设计课设\程序设计课设.vdproj", "{0F15EC27-04F0-4D9F-BA07-A1627ACC98FC}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "程序设计课设", "..\程序设计课设\程序设计课设.vdproj", "{C475A5CB-25EB-43DA-BCEE-321DE3B0A7FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{61C97C24-54D3-43A8-A6C6-12EAFB33A4BA}.Release|x64.Build.0 = Release|x64
 		{61C97C24-54D3-43A8-A6C6-12EAFB33A4BA}.Release|x86.ActiveCfg = Release|Win32
 		{61C97C24-54D3-43A8-A6C6-12EAFB33A4BA}.Release|x86.Build.0 = Release|Win32
-		{0F15EC27-04F0-4D9F-BA07-A1627ACC98FC}.Debug|x64.ActiveCfg = Debug
-		{0F15EC27-04F0-4D9F-BA07-A1627ACC98FC}.Debug|x86.ActiveCfg = Debug
-		{0F15EC27-04F0-4D9F-BA07-A1627ACC98FC}.Release|x64.ActiveCfg = Release
-		{0F15EC27-04F0-4D9F-BA07-A1627ACC98FC}.Release|x86.ActiveCfg = Release
+		{C475A5CB-25EB-43DA-BCEE-321DE3B0A7FC}.Debug|x64.ActiveCfg = Debug
+		{C475A5CB-25EB-43DA-BCEE-321DE3B0A7FC}.Debug|x86.ActiveCfg = Debug
+		{C475A5CB-25EB-43DA-BCEE-321DE3B0A7FC}.Release|x64.ActiveCfg = Release
+		{C475A5CB-25EB-43DA-BCEE-321DE3B0A7FC}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

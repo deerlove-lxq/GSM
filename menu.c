@@ -135,7 +135,10 @@ void func_menu() {
 	double foot = 20;
 	double its, k, dx, dy, dr;
 	
-	Terminal t, tmp_t1, tmp_t2, t1, t2, t3, start_t;
+	bool sign_begin = false;	//针对首个重叠区的标志
+	Node jz_begin;				//最初连接的基站
+
+	Terminal t, tmp_t1, tmp_t2, t1, t2, t3, start_t, pre_t;
 	Fake w;
 	int t_jz_num = 0, id_pre = -1, id_wz = -1;
 	int id_its = -1, goal_id = -1, first_idx = 0;
@@ -360,8 +363,15 @@ void func_menu() {
 		k = t.full_dist / foot;
 		cal_intensity(root, t.xs, t.ys, &id_its);
 		id_pre = id_its;
-			
-		//t1为前一个位置; t2为内部位置; tmp为第一个基站id，id_its为第二个基站id
+		pre_t = t;
+		jz_begin = search_id_jz(id_its);
+
+		if (query_in(t, jz_begin)) {
+			//如果一开始就在
+			sign_begin = true;
+		}
+
+		//t1为前一个位置; t2为内部位置; id_pre为第一个基站id，id_its为第二个基站id
 		for (int i = 0; i < k; i++) {
 			t = cal_position(t, foot);
 			cal_intensity(root, t.xs, t.ys, &id_its);	//获取当前位置连接的基站id_its
@@ -379,10 +389,9 @@ void func_menu() {
 		}
 
 		printf("从基站%d切换到基站%d\n", id_pre, id_its);
-
-		//t1位置任取前面任何一个都可以
-		t1 = yd[op_route - 1];
 		
+		//t1位置任意
+		t1 = yd[op_route - 1];
 		//t3位置已经离开前一个基站的有效范围
 		t = yd[op_route - 1];
 		for (int i = tmp; i < k; i++) {
@@ -400,6 +409,7 @@ void func_menu() {
 		bisection(&x1, &y1, &x2, &y2, id_its);
 		dx = x1 - t.xs, dy = y1 - t.ys, dr = sqrt(dx * dx + dy * dy);
 		tmp_t1 = cal_position(t, dr);
+
 		printf("误差为0.1米：%d时%d分%.4lf秒，在(%.1lf, %.1lf)-(%.1lf, %.1lf)处进入基站%d\n", tmp_t1.hour, tmp_t1.minute, tmp_t1.seconds, x1, y1, x2, y2, id_its);
 
 		x1 = t2.xs, y1 = t2.ys, x2 = t3.xs, y2 = t3.ys;
@@ -527,7 +537,7 @@ void createTree(QuadTree* root, Node* arr, int n) {
 
 	//否则发生点的分裂，分裂为4个子叶子
 	int num_nw = 0, num_ne = 0, num_sw = 0, num_se = 0;
-	int nw = 0, ne = 0, sw = 0, se = 0;
+	int arr_nw = 0, arr_ne = 0, arr_sw = 0, arr_se = 0;
 	double root_x = (root->boundary.left + root->boundary.right) / 2;
 	double root_y = (root->boundary.bottom + root->boundary.top) / 2;
 
@@ -549,10 +559,10 @@ void createTree(QuadTree* root, Node* arr, int n) {
 	for (int i = 0; i < n; i++) {
 		Node node = arr[i];
 		//不可能正好与基站重合，压x和y轴正向或原点算在东北框内。
-		if (node.x >= root_x && node.y >= root_y) node_ne[ne++] = node;
-		else if (node.x > root_x && node.y < root_y) node_se[se++] = node;
-		else if (node.x < root_x && node.y > root_y) node_nw[nw++] = node;
-		else if (node.x <= root_x && node.y <= root_y) node_sw[sw++] = node;
+		if (node.x >= root_x && node.y >= root_y) node_ne[arr_ne++] = node;
+		else if (node.x > root_x && node.y < root_y) node_se[arr_se++] = node;
+		else if (node.x < root_x && node.y > root_y) node_nw[arr_nw++] = node;
+		else if (node.x <= root_x && node.y <= root_y) node_sw[arr_sw++] = node;
 	}
 
 	root->is_leafNode = false;	//分裂后不再是叶子
@@ -632,49 +642,52 @@ void connect_wz(Terminal yd_start, Fake wz_start) {
 	}
 	
 	//功能实现：固定时间步长移动，不断探测与伪基站的距离是否在有效距离以内
-	double dx = t.xs - w.xs, dy = t.ys - w.ys;
-	double r = sqrt(dx * dx + dy * dy), pre_r = r;	//距离伪基站的距离
-	int tmp = 0;	//临时保存步数
+		double dx = t.xs - w.xs, dy = t.ys - w.ys;
+		double r = sqrt(dx * dx + dy * dy), pre_r = r;	//距离伪基站的距离
+		int tmp = 0;	//临时保存步数
 
-	if (r <= w.valid_dist) {
-		//刚开始就连上了
-		t1 = t;
-		flag_in = true;
-	}
-	else {
-		//刚开始未连上
-		for (int i = 0; i < k; i++) {
+		if (r <= w.valid_dist) {
+			//刚开始就连上了
+			t1 = t;
+			flag_in = true;
+		}
+		else {
+			//刚开始未连上
+			for (int i = 0; i < k; i++) {
+				t = cal_position(t, dist_yd);
+				w = cal_position_wz(w, dist_wz);
+				dx = t.xs - w.xs, dy = t.ys - w.ys;
+				r = sqrt(dx * dx + dy * dy);
+				if (r <= w.valid_dist && pre_r >= w.valid_dist) {
+					//说明找到了刚连接的坐标
+					t1 = t;
+					tmp = i;
+					flag_in = true;
+					break;
+				}
+				pre_r = r;
+			}
+		}
+		for (int i = tmp; i < k; i++) {
 			t = cal_position(t, dist_yd);
 			w = cal_position_wz(w, dist_wz);
 			dx = t.xs - w.xs, dy = t.ys - w.ys;
 			r = sqrt(dx * dx + dy * dy);
-			if (r <= w.valid_dist && pre_r >= w.valid_dist) {
-				//说明找到了刚连接的坐标
-				t1 = t;
-				tmp = i;
-				flag_in = true;
+			if (r > w.valid_dist) {
+				//说明找到了刚离开的坐标
+				t2 = t;
+				flag_out = true;
 				break;
 			}
-			pre_r = r;
 		}
-	}
-	
-	for (int i = tmp; i < k; i++) {
-		t = cal_position(t, dist_yd);
-		w = cal_position_wz(w, dist_wz);
-		dx = t.xs - w.xs, dy = t.ys - w.ys;
-		r = sqrt(dx * dx + dy * dy);
-		if (r > w.valid_dist) {
-			//说明找到了刚离开的坐标
+		
+		if (flag_in && !flag_out) {
+			//说明一直到尾部都在连接，直接退出即可
 			t2 = t;
-			flag_out = true;
-			break;
 		}
-	}
-
-	if (flag_in && !flag_out) t2 = t;
-	if (!flag_in) printf("没有连接的时间!\n");
-	else printf("终端从%d时%d分%.1lf秒开始与伪基站连接，到%d时%d分%.1lf秒断开连接。共持续了%.1lf秒的连接时间。\n", t1.hour, t1.minute, t1.seconds, t2.hour, t2.minute, t2.seconds, cal_time(t1, t2));
+		if (!flag_in) printf("没有连接的时间!\n");
+		if (flag_in) printf("终端从%d时%d分%.1lf秒开始与伪基站连接，到%d时%d分%.1lf秒断开连接。共持续了%.1lf秒的连接时间。\n", t1.hour, t1.minute, t1.seconds, t2.hour, t2.minute, t2.seconds, cal_time(t1, t2));
+	
 }
 
-//代码量：680行
+//代码量：693行

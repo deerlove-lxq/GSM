@@ -8,9 +8,15 @@
 #include <string.h>
 #include <math.h>
 #include "function.h"
+#include "cpp_func.hpp"
 
 extern Node gaosu[20];								//单独存储少量的高速基站信息
 extern int cnt_gao;									//高速基站个数
+
+////关于画图的全局变量
+//extern double draw_jz_x[10000];	//存储基站的x坐标，基站总数为cnt + 1
+//extern double draw_jz_y[10000];	//存储基站的y坐标，基站总数为cnt + 1
+//extern int draw_cnt;
 
 //计算基站信号有效范围
 void cal_valid_dist(Node* node) {
@@ -45,7 +51,7 @@ Node* readFile_jz(FILE* fp, Node* ptr) {
 			fscanf(fp, "\n");
 			double a = 0, b = 0, t = 0;
 			int c = 0;
-			while (fscanf(fp, "%lf,%lf", &a, &b) == 2 && a != -1 && b != -1) {
+			while (fscanf(fp, "%lf,%lf", &a, &b) == 2 && !((a == -1) && (b == -1))) {
 				memset(buf, '\0', sizeof buf);
 				fscanf(fp, ",%s", buf);
 				fscanf(fp, "%lf,%d\n", &t, &c);
@@ -79,7 +85,7 @@ Terminal* readFile_yd(FILE* fp, Terminal* ptr) {
 			fscanf(fp, "\n");
 			double a = 0, b = 0, c = 0, d = 0, v = 0;
 			int h = 0, min = 0;
-			while (fscanf(fp, "%lf,%lf", &a, &b) == 2 && a != -1 && b != -1) {
+			while (fscanf(fp, "%lf,%lf", &a, &b) == 2 && !((a == -1) && (b == -1))) {
 				fscanf(fp, ",%lf,%lf,%lf,%d,%d\n", &c, &d, &v, &h, &min);
 				ptr->xs = a, ptr->ys = b, ptr->xe = c, ptr->ye = d, ptr->speed = v / 3.6;
 				ptr->full_dist = sqrt((a - c) * (a - c) + (b - d) * (b - d));
@@ -110,7 +116,7 @@ Fake* readFile_wz(FILE* fp, Fake* ptr) {
 			fscanf(fp, "\n");
 			double a = 0, b = 0, c = 0, d = 0, v = 0;
 			int h = 0, min = 0, id = 0;
-			while (fscanf(fp, "%lf,%lf", &a, &b) == 2 && a != -1 && b != -1) {
+			while (fscanf(fp, "%lf,%lf", &a, &b) == 2 && !((a == -1) && (b == -1))) {
 				fscanf(fp, ",%lf,%lf,%lf,%d,%d,%d\n", &c, &d, &v, &h, &min, &id);
 				ptr->xs = a, ptr->ys = b, ptr->xe = c, ptr->ye = d, ptr->speed = v / 3.6;
 				ptr->hour = h, ptr->minute = min, ptr->ID = id, ptr->seconds = 0;
@@ -588,11 +594,17 @@ Terminal cal_position(Terminal t, double dist) {
 	ans.xs = t.xs + chx, ans.ys = t.ys + chy;
 	//换算时间
 	double time = dist / t.speed;
-	double all_sec = time + t.seconds;
-	ans.seconds = all_sec - (int)all_sec + (int)all_sec % 60;
-	int all_minute = (int)(all_sec - ans.seconds) / 60 + t.minute;
-	ans.minute = all_minute % 60;
-	ans.hour = all_minute / 60 + t.hour;
+	int st_hour = t.hour, st_minute = t.minute;
+	double st_seconds = t.seconds;
+
+	if (time > 0) {
+		double all_sec = time + t.seconds;
+		ans.seconds = all_sec - (int)all_sec + (int)all_sec % 60;
+		int all_minute = (int)(all_sec - ans.seconds) / 60 + t.minute;
+		ans.minute = all_minute % 60;
+		ans.hour = all_minute / 60 + t.hour;
+	}
+	
 	return ans;
 }
 
@@ -676,5 +688,4 @@ void destroyTree(QuadTree* root) {
 	free(root);
 }
 
-
-//代码量：680行
+//代码量：690行

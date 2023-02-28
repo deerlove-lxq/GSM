@@ -33,5 +33,4 @@ bool query_in(Terminal t, Node node);
 void connect_wz(Terminal yd_start, Fake wz_start);
 int hash_id(int id);
 void destroyTree(QuadTree* root);
-
 #endif // _FUNCTION_h
